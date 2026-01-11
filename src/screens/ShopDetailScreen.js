@@ -1,9 +1,40 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet, Image } from 'react-native';
-import { Text, Title, Divider, Button } from 'react-native-paper';
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { Text, List, Divider, Title, Card, Paragraph, Button } from 'react-native-paper';
+import { db } from '../../firebaseConfig'; 
+import { collection, query, where, getDocs } from 'firebase/firestore'; 
 
 export default function ShopDetailScreen({ route, navigation }) {
-  const { shop } = route.params; 
+  const { shop } = route.params;
+  const [services, setServices] = useState([]); 
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Get Services
+        const qServices = query(collection(db, "services"), where("shopId", "==", shop.id));
+        const servicesSnap = await getDocs(qServices);
+        const servicesList = [];
+        servicesSnap.forEach((doc) => servicesList.push({ ...doc.data(), id: doc.id }));
+        setServices(servicesList);
+
+        // Get Comments
+        const qReviews = query(collection(db, "reviews"), where("shopId", "==", shop.id));
+        const reviewsSnap = await getDocs(qReviews);
+        const reviewsList = [];
+        reviewsSnap.forEach((doc) => reviewsList.push({ ...doc.data(), id: doc.id }));
+        setReviews(reviewsList);
+
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [shop.id]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
@@ -16,7 +47,24 @@ export default function ShopDetailScreen({ route, navigation }) {
 
         <Divider style={styles.divider} />
         <Title style={styles.subTitle}>Hizmetler</Title>
-        <Text style={{color:'gray'}}>Yükleniyor...</Text>
+
+        {loading ? <ActivityIndicator size="small" /> : services.map((service) => (
+          <List.Item
+            key={service.id}
+            title={service.name}
+            description={`${service.duration} • ${service.price} TL`}
+            left={props => <List.Icon {...props} icon="content-cut" />}
+            right={props => <Button mode="outlined" onPress={() => console.log('Randevu sayfasına git')}>Seç</Button>}
+          />
+        ))}
+
+        <Divider style={styles.divider} />
+        <Title style={styles.subTitle}>Yorumlar</Title>
+        {reviews.map((r) => (
+           <Card key={r.id} style={{marginBottom:10, backgroundColor:'#f9f9f9'}}>
+             <Card.Content><Paragraph>{r.comment}</Paragraph></Card.Content>
+           </Card>
+        ))}
       </View>
     </ScrollView>
   );
