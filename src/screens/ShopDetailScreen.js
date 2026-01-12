@@ -13,14 +13,14 @@ export default function ShopDetailScreen({ route, navigation }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get Services
+        
         const qServices = query(collection(db, "services"), where("shopId", "==", shop.id));
         const servicesSnap = await getDocs(qServices);
         const servicesList = [];
         servicesSnap.forEach((doc) => servicesList.push({ ...doc.data(), id: doc.id }));
         setServices(servicesList);
 
-        // Get Comments
+        
         const qReviews = query(collection(db, "reviews"), where("shopId", "==", shop.id));
         const reviewsSnap = await getDocs(qReviews);
         const reviewsList = [];
@@ -54,7 +54,7 @@ export default function ShopDetailScreen({ route, navigation }) {
             title={service.name}
             description={`${service.duration} • ${service.price} TL`}
             left={props => <List.Icon {...props} icon="content-cut" />}
-            right={props => <Button mode="outlined" onPress={() => console.log('Randevu sayfasına git')}>Seç</Button>}
+            right={props => <Button mode="outlined" onPress={() => navigation.navigate('Booking' , {shop: shop , service: service})}>Seç</Button>}
           />
         ))}
 

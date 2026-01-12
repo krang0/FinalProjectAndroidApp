@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ShopDetailScreen from './src/screens/ShopDetailScreen';
+import BookingScreen from './src/screens/BookingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,7 +26,8 @@ export default function App() {
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="ShopDetail" component={ShopDetailScreen} options={{ title: 'Dükkan Detayı', headerShown: true }} />
           <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Main" component={HomeScreen} />
+          <Stack.Screen name="Main" component={HomeScreen} />
+          <Stack.Screen name="Booking" component={BookingScreen} options={{ title: 'Randevu Seç' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
