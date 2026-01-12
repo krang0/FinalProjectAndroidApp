@@ -15,7 +15,7 @@ export default function BookingScreen({ route, navigation }) {
 
   const handleBooking = async () => {
     if (!selectedSlot) {
-      Alert.alert("Hata", "Lütfen bir saat seçin.");
+      navigation.navigate('Payment', { appointmentData });
       return;
     }
 
@@ -38,7 +38,7 @@ export default function BookingScreen({ route, navigation }) {
       createdAt: new Date()
     };
 
-    
+    console.log("Oluşturulan Randevu Datası:", appointmentData);
     navigation.navigate('Payment', { appointmentData: appointmentData });
   };
 

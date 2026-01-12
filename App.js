@@ -7,6 +7,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ShopDetailScreen from './src/screens/ShopDetailScreen';
 import BookingScreen from './src/screens/BookingScreen';
+import PaymentScreen from './src/screens/PaymentScreen';  
+
 
 const Stack = createNativeStackNavigator();
 
@@ -28,6 +30,7 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Main" component={HomeScreen} />
           <Stack.Screen name="Booking" component={BookingScreen} options={{ title: 'Randevu Seç' }} />
+          <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Ödeme Yap' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
