@@ -51,30 +51,58 @@ export default function PaymentScreen({ route }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Card style={styles.summary}>
+      <Card style={styles.summaryCard}>
         <Card.Content>
           <Title>Ödeme Özeti</Title>
           <Text>Hizmet: {appointmentData.serviceName}</Text>
-          <Text>Tarih: {appointmentData.date} - {appointmentData.time}</Text>
-          <Title style={{color:'green', marginTop:10}}>Tutar: {appointmentData.price} TL</Title>
+          <Text>Tarih: {appointmentData.date} / {appointmentData.time}</Text>
+          <Title style={{ marginTop: 10, color: 'green' }}>Tutar: {appointmentData.price} TL</Title>
         </Card.Content>
       </Card>
 
+      <Title style={styles.title}>Kart Bilgileri</Title>
+      
       <TextInput
-        label="Kart Numarası"
+        label="Kart Numarası (16 Hane)"
         value={cardNumber}
-        onChangeText={setCardNumber}
-        keyboardType="numeric"
-        maxLength={16}
-        mode="outlined"
+        onChangeText={(text) => setCardNumber(text.replace(/[^0-9]/g, '').slice(0, 16))}
         style={styles.input}
+        mode="outlined"
+        keyboardType="numeric"
       />
+      
+      <View style={styles.row}>
+        <TextInput
+          label="SKT (AA/YY)"
+          value={expiry}
+          onChangeText={setExpiry}
+          style={[styles.input, styles.halfInput]}
+          mode="outlined"
+        />
+        <TextInput
+          label="CVC"
+          value={cvc}
+          onChangeText={(text) => setCvc(text.replace(/[^0-9]/g, '').slice(0, 3))}
+          style={[styles.input, styles.halfInput]}
+          mode="outlined"
+          keyboardType="numeric"
+          secureTextEntry
+        />
+      </View>
 
-      <HelperText type="info">Demo ödeme ekranıdır, gerçek para çekilmez.</HelperText>
-
-      <Button mode="contained" onPress={handlePayment} loading={loading} style={styles.button}>
-        Ödemeyi Tamamla
+      <Button 
+        mode="contained" 
+        onPress={handlePaymentAndBooking} 
+        loading={loading}
+        style={styles.payButton}
+        icon="credit-card"
+      >
+        Öde ve Onayla
       </Button>
+      
+      <HelperText type="info" style={{textAlign:'center'}}>
+        Bu bir simülasyondur. Gerçek para çekilmez.
+      </HelperText>
     </ScrollView>
   );
 }
