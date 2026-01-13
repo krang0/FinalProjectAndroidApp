@@ -1,23 +1,45 @@
 import React from 'react';
-import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { IconButton } from 'react-native-paper';
+
+
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import AppointmentsScreen from './src/screens/AppointmentsScreen';
 import ShopDetailScreen from './src/screens/ShopDetailScreen';
 import BookingScreen from './src/screens/BookingScreen';
-import PaymentScreen from './src/screens/PaymentScreen';  
-
+import PaymentScreen from './src/screens/PaymentScreen'; 
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-
-function TempHome() {
+function MainTabs() {
   return (
-    <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
-      <Text>Ana Sayfa Yükleniyor...</Text>
-    </View>
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen 
+        name="HomeTab" 
+        component={HomeScreen} 
+        options={{ 
+          title: 'Keşfet',
+          tabBarIcon: ({ color, size }) => (
+            <IconButton icon="store" iconColor={color} size={size} />
+          )
+        }} 
+      />
+      <Tab.Screen 
+        name="AppointmentsTab" 
+        component={AppointmentsScreen} 
+        options={{ 
+          title: 'Randevularım',
+          tabBarIcon: ({ color, size }) => (
+            <IconButton icon="calendar" iconColor={color} size={size} />
+          )
+        }} 
+      />
+    </Tab.Navigator>
   );
 }
 
@@ -26,11 +48,25 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="ShopDetail" component={ShopDetailScreen} options={{ title: 'Dükkan Detayı', headerShown: true }} />
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Main" component={HomeScreen} />
-          <Stack.Screen name="Booking" component={BookingScreen} options={{ title: 'Randevu Seç' }} />
-          <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Ödeme Yap' }} />
+          <Stack.Screen name="Main" component={MainTabs} />
+          
+          <Stack.Screen 
+            name="ShopDetail" 
+            component={ShopDetailScreen} 
+            options={{ title: 'Dükkan Detayı', headerShown: true }} 
+          />
+          <Stack.Screen 
+            name="Booking" 
+            component={BookingScreen} 
+            options={{ title: 'Randevu Tamamla' }} 
+          />
+          
+          <Stack.Screen 
+            name="Payment" 
+            component={PaymentScreen} 
+            options={{ title: 'Ödeme Yap' }} 
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
