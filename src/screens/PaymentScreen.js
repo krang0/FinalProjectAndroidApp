@@ -10,17 +10,27 @@ export default function PaymentScreen({ route }) {
   const { appointmentData } = route.params; 
 
   const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState(''); 
+  const [cvc, setCvc] = useState(''); 
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
+    
     if (cardNumber.length < 16) {
       Alert.alert("Hata", "Geçersiz kart numarası");
+      return;
+    }
+    if (expiry.length < 4) {
+      Alert.alert("Hata", "Geçersiz son kullanma tarihi");
+      return;
+    }
+    if (cvc.length < 3) {
+      Alert.alert("Hata", "Geçersiz CVC");
       return;
     }
 
     setLoading(true);
     try {
-      // ÇAKIŞMA KONTROLÜ (Concurrency)
       const docRef = doc(db, "appointments", appointmentData.id);
       const docSnap = await getDoc(docRef);
 
@@ -30,8 +40,11 @@ export default function PaymentScreen({ route }) {
         return;
       }
 
-      // Randevuyu Kaydet
-      await setDoc(docRef, { ...appointmentData, status: 'confirmed', paidAt: new Date() });
+      await setDoc(docRef, { 
+        ...appointmentData, 
+        status: 'confirmed', 
+        paidAt: new Date() 
+      });
 
       Alert.alert("Başarılı", "Randevunuz oluşturuldu!", [
         { 
@@ -56,7 +69,9 @@ export default function PaymentScreen({ route }) {
           <Title>Ödeme Özeti</Title>
           <Text>Hizmet: {appointmentData.serviceName}</Text>
           <Text>Tarih: {appointmentData.date} / {appointmentData.time}</Text>
-          <Title style={{ marginTop: 10, color: 'green' }}>Tutar: {appointmentData.price} TL</Title>
+          <Title style={{ marginTop: 10, color: 'green' }}>
+            Tutar: {appointmentData.price} TL
+          </Title>
         </Card.Content>
       </Card>
 
@@ -75,9 +90,10 @@ export default function PaymentScreen({ route }) {
         <TextInput
           label="SKT (AA/YY)"
           value={expiry}
-          onChangeText={setExpiry}
+          onChangeText={(text) => setExpiry(text.replace(/[^0-9]/g, '').slice(0, 4))}
           style={[styles.input, styles.halfInput]}
           mode="outlined"
+          placeholder="01/26"
         />
         <TextInput
           label="CVC"
@@ -92,7 +108,7 @@ export default function PaymentScreen({ route }) {
 
       <Button 
         mode="contained" 
-        onPress={handlePaymentAndBooking} 
+        onPress={handlePayment} 
         loading={loading}
         style={styles.payButton}
         icon="credit-card"
@@ -108,8 +124,33 @@ export default function PaymentScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  summary: { marginBottom: 20, backgroundColor: '#e8f5e9' },
-  input: { marginBottom: 10 },
-  button: { marginTop: 20, padding: 5 }
+  container: { 
+    flexGrow: 1, 
+    padding: 20, 
+    backgroundColor: '#fff' 
+  },
+  summaryCard: { 
+    marginBottom: 20, 
+    backgroundColor: '#e8f5e9' 
+  },
+  title: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 15, 
+    marginTop: 10 
+  },
+  input: { 
+    marginBottom: 15 
+  },
+  row: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between' 
+  },
+  halfInput: { 
+    width: '48%' 
+  },
+  payButton: { 
+    marginTop: 20, 
+    paddingVertical: 8 
+  }
 });
