@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { Text, List, Divider, Title, Card, Paragraph, Button } from 'react-native-paper';
-import MapView, { Marker } from 'react-native-maps'; // Harita eklendi
+import MapView, { Marker } from 'react-native-maps'; 
 import { db } from '../../firebaseConfig'; 
-import { collection, query, where, getDocs } from 'firebase/firestore'; 
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { Linking, Alert } from 'react-native'; 
 
 export default function ShopDetailScreen({ route, navigation }) {
   const { shop } = route.params;
@@ -34,7 +35,7 @@ export default function ShopDetailScreen({ route, navigation }) {
     fetchData();
   }, [shop.id]);
 
-  // Varsayılan koordinat (Dükkanın verisi yoksa İstanbul)
+  
   const shopLocation = {
     latitude: shop.location?.latitude || 41.0082,
     longitude: shop.location?.longitude || 28.9784,
@@ -51,13 +52,21 @@ export default function ShopDetailScreen({ route, navigation }) {
         <Text style={styles.address}>📍 {shop.address}</Text>
         <Text style={styles.rating}>⭐ {shop.rating} / 5</Text>
 
-        {/* HARİTA ALANI */}
+        
         <Text style={styles.subTitle}>Konum</Text>
         <View style={styles.mapContainer}>
           <MapView style={styles.map} initialRegion={shopLocation}>
             <Marker coordinate={shopLocation} title={shop.name} description={shop.address} />
           </MapView>
         </View>
+
+        <Button 
+          mode="contained" icon="whatsapp" color="#25D366" 
+          style={{ marginTop: 15, backgroundColor: '#25D366' }}
+          onPress={() => Linking.openURL(`whatsapp://send?phone=905551234567`)}
+        >
+          WhatsApp İle İletişime Geç
+        </Button>
 
         <Divider style={styles.divider} />
         <Title style={styles.subTitle}>Hizmetler</Title>
@@ -80,12 +89,22 @@ export default function ShopDetailScreen({ route, navigation }) {
         ))}
 
         <Divider style={styles.divider} />
-        <Title style={styles.subTitle}>Yorumlar</Title>
-        {reviews.map((r) => (
-           <Card key={r.id} style={{marginBottom:10, backgroundColor:'#f9f9f9'}}>
-             <Card.Content><Paragraph>{r.comment}</Paragraph></Card.Content>
-           </Card>
-        ))}
+        <Title style={styles.subTitle}>Yorumlar ({reviews.length})</Title>
+        {reviews.length === 0 ? (
+          <Text style={{color:'gray'}}>Henüz yorum yapılmamış.</Text>
+        ) : (reviews.map((review) => (
+            <Card key={review.id} style={{ marginBottom: 10, backgroundColor: '#f9f9f9' }}>
+              <Card.Content>
+                <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                   <Text style={{fontWeight:'bold'}}>{review.rating} ⭐</Text>
+                   <Text style={{color:'gray', fontSize:12}}>Kullanıcı: {review.userId}</Text>
+                </View>
+                <Paragraph style={{marginTop:5}}>{review.comment}</Paragraph>
+              </Card.Content>
+            </Card>
+          ))
+        )}
+
       </View>
     </ScrollView>
   );
