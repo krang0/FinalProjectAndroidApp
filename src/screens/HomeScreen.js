@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, ScrollView } from 'react-native';
-import { Appbar, Text, ActivityIndicator, Chip } from 'react-native-paper';
-import { db, auth } from '../../firebaseConfig'; 
+import { View, FlatList, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { Appbar, Text, ActivityIndicator, IconButton } from 'react-native-paper';
+import { db, auth } from '../../firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
-import ShopCard from '../components/ShopCard'; 
+import ShopCard from '../components/ShopCard';
+import { theme } from '../theme';
+
+const { width } = Dimensions.get('window');
+
+const CATEGORIES = [
+  { id: 'All', label: 'Tümü' },
+  { id: 'Men', label: 'Erkek 💈' },
+  { id: 'Women', label: 'Kadın 💇‍♀️' },
+  { id: 'Unisex', label: 'Unisex ✂️' },
+];
 
 export default function HomeScreen({ navigation }) {
   const [shops, setShops] = useState([]);
-  const [filteredShops, setFilteredShops] = useState([]); 
+  const [filteredShops, setFilteredShops] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All'); 
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const fetchShops = async () => {
     setLoading(true);
@@ -51,54 +61,62 @@ export default function HomeScreen({ navigation }) {
     auth.signOut().then(() => navigation.replace('Login'));
   };
 
-  return (
-    <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.Content title="StyleSpot - Keşfet" />
-        <Appbar.Action icon="logout" onPress={handleLogout} />
-      </Appbar.Header>
-
-      <View style={styles.filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <Chip 
-            selected={selectedCategory === 'All'} 
-            onPress={() => handleCategorySelect('All')} 
-            style={styles.chip} 
-            mode="outlined"
-          >
-            Tümü
-          </Chip>
-          <Chip 
-            selected={selectedCategory === 'Men'} 
-            onPress={() => handleCategorySelect('Men')} 
-            style={styles.chip} 
-            mode="outlined"
-          >
-            Erkek 💈
-          </Chip>
-          <Chip 
-            selected={selectedCategory === 'Women'} 
-            onPress={() => handleCategorySelect('Women')} 
-            style={styles.chip} 
-            mode="outlined"
-          >
-            Kadın 💇‍♀️
-          </Chip>
-          <Chip 
-            selected={selectedCategory === 'Unisex'} 
-            onPress={() => handleCategorySelect('Unisex')} 
-            style={styles.chip} 
-            mode="outlined"
-          >
-            Unisex ✂️
-          </Chip>
-        </ScrollView>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerTop}>
+        <View>
+          <Text style={styles.headerSubtitle}>Keşfet</Text>
+          <Text style={styles.headerTitle}>StyleSpot</Text>
+        </View>
+        <IconButton
+          icon="logout"
+          iconColor={theme.colors.primary}
+          size={24}
+          onPress={handleLogout}
+          style={styles.logoutButton}
+        />
       </View>
 
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryContainer}
+      >
+        {CATEGORIES.map((cat) => {
+          const isSelected = selectedCategory === cat.id;
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoryPill,
+                isSelected && styles.categoryPillActive
+              ]}
+              onPress={() => handleCategorySelect(cat.id)}
+            >
+              <Text style={[
+                styles.categoryText,
+                isSelected && styles.categoryTextActive
+              ]}>
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      {renderHeader()}
+
       {loading ? (
-        <ActivityIndicator animating={true} size="large" style={styles.loader} />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator animating={true} size="large" color={theme.colors.primary} />
+        </View>
       ) : filteredShops.length === 0 ? (
         <View style={styles.emptyContainer}>
+          <IconButton icon="store-off" size={64} iconColor={theme.colors.text.secondary} />
           <Text style={styles.emptyText}>Henüz dükkan bulunmuyor.</Text>
           <Text style={styles.emptySubText}>
             Dükkanlar eklendiğinde burada görünecektir.
@@ -109,11 +127,13 @@ export default function HomeScreen({ navigation }) {
           data={filteredShops}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <ShopCard 
-              shop={item} 
+            <ShopCard
+              shop={item}
               onPress={() => navigation.navigate('ShopDetail', { shop: item })}
             />
           )}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -121,29 +141,94 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  loader: { marginTop: 50 },
-  emptyContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background
+  },
+  header: {
+    backgroundColor: theme.colors.surface,
+    paddingTop: 50,
+    paddingBottom: theme.spacing.m,
+    borderBottomLeftRadius: theme.borderRadius.xl,
+    borderBottomRightRadius: theme.borderRadius.xl,
+    ...theme.shadows.sm,
+    zIndex: 1,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20
+    paddingHorizontal: theme.spacing.l,
+    marginBottom: theme.spacing.m,
+  },
+  headerTitle: {
+    ...theme.typography.h1,
+    color: theme.colors.primary,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontWeight: '600',
+  },
+  logoutButton: {
+    margin: 0,
+    backgroundColor: theme.colors.background,
+  },
+  categoryContainer: {
+    paddingHorizontal: theme.spacing.l,
+    paddingBottom: theme.spacing.xs,
+  },
+  categoryPill: {
+    paddingHorizontal: theme.spacing.m,
+    paddingVertical: 8,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginRight: theme.spacing.s,
+  },
+  categoryPillActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+    ...theme.shadows.sm,
+  },
+  categoryText: {
+    ...theme.typography.button,
+    fontSize: 14,
+    color: theme.colors.text.primary,
+  },
+  categoryTextActive: {
+    color: theme.colors.text.inverse,
+  },
+  listContainer: {
+    padding: theme.spacing.m,
+    paddingTop: theme.spacing.l,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 10
+    ...theme.typography.h3,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.m,
+    marginBottom: theme.spacing.s,
   },
   emptySubText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center'
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    opacity: 0.7,
   },
-  filterContainer: { 
-    padding: 10, 
-    backgroundColor: 'white', 
-    height: 60 
-  },
-  chip: { marginRight: 8, height: 35 }
 });

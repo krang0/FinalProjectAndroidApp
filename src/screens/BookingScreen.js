@@ -1,29 +1,29 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Button, Chip, Title, Card } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Text, Button, Title, Card, ProgressBar } from 'react-native-paper';
 import { auth } from '../../firebaseConfig';
-import { format, addDays } from 'date-fns'; 
+import { format, addDays, isSameDay } from 'date-fns';
+import { tr } from 'date-fns/locale';
+import { theme } from '../theme';
 
 export default function BookingScreen({ route, navigation }) {
-  const { shop, service } = route.params; 
+  const { shop, service } = route.params;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
-  const dates = Array.from({ length: 5 }, (_, i) => addDays(new Date(), i));
+  const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
   const handleBooking = async () => {
     if (!selectedSlot) {
-      navigation.navigate('Payment', { appointmentData });
+      Alert.alert("Eksik Bilgi", "Lütfen bir saat seçiniz.");
       return;
     }
 
     const dateStr = format(selectedDate, "yyyy-MM-dd");
-    
     const appointmentId = `${shop.id}_${dateStr}_${selectedSlot}`;
-    
-    
+
     const appointmentData = {
       id: appointmentId,
       shopId: shop.id,
@@ -34,7 +34,7 @@ export default function BookingScreen({ route, navigation }) {
       price: service.price,
       date: dateStr,
       time: selectedSlot,
-      status: 'confirmed', 
+      status: 'pending',
       createdAt: new Date()
     };
 
@@ -43,68 +43,235 @@ export default function BookingScreen({ route, navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>{shop.name}</Title>
-          <Text>{service.name} - {service.price} TL</Text>
-          <Text style={{color:'gray'}}>{service.duration}</Text>
-        </Card.Content>
-      </Card>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
 
-      <Title style={styles.sectionTitle}>Tarih Seçin</Title>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-        {dates.map((date, index) => {
-          const isSelected = format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
-          return (
-            <Chip
-              key={index}
-              mode={isSelected ? 'flat' : 'outlined'}
-              selected={isSelected}
-              onPress={() => setSelectedDate(date)}
-              style={styles.chip}
-            >
-              {format(date, 'dd MMM')}
-            </Chip>
-          );
-        })}
+
+        <View style={styles.progressContainer}>
+          <Text style={styles.stepText}>Adım 1 / 2: Tarih ve Saat</Text>
+          <ProgressBar progress={0.5} color={theme.colors.primary} style={styles.progressBar} />
+        </View>
+
+
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title style={styles.shopName}>{shop.name}</Title>
+            <View style={styles.serviceRow}>
+              <Text style={styles.serviceName}>{service.name}</Text>
+              <Text style={styles.servicePrice}>{service.price} TL</Text>
+            </View>
+            <Text style={styles.serviceDuration}>⏱️ {service.duration}</Text>
+          </Card.Content>
+        </Card>
+
+
+        <Title style={styles.sectionTitle}>Tarih Seçin</Title>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateScroll}>
+          {dates.map((date, index) => {
+            const isSelected = isSameDay(date, selectedDate);
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.dateChip,
+                  isSelected && styles.dateChipSelected
+                ]}
+                onPress={() => setSelectedDate(date)}
+              >
+                <Text style={[styles.dayText, isSelected && styles.textSelected]}>
+                  {format(date, 'd', { locale: tr })}
+                </Text>
+                <Text style={[styles.monthText, isSelected && styles.textSelected]}>
+                  {format(date, 'MMM', { locale: tr })}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+
+        <Title style={styles.sectionTitle}>Saat Seçin</Title>
+        <View style={styles.grid}>
+          {timeSlots.map((slot, index) => {
+            const isSelected = selectedSlot === slot;
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.timeChip,
+                  isSelected && styles.timeChipSelected
+                ]}
+                onPress={() => setSelectedSlot(slot)}
+              >
+                <Text style={[styles.timeText, isSelected && styles.textSelected]}>
+                  {slot}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
       </ScrollView>
 
-      <Title style={styles.sectionTitle}>Saat Seçin</Title>
-      <View style={styles.grid}>
-        {timeSlots.map((slot, index) => (
-          <Chip
-            key={index}
-            mode={selectedSlot === slot ? 'flat' : 'outlined'}
-            selected={selectedSlot === slot}
-            onPress={() => setSelectedSlot(slot)}
-            style={styles.slotChip}
-          >
-            {slot}
-          </Chip>
-        ))}
-      </View>
 
-      <Button 
-        mode="contained" 
-        onPress={handleBooking} 
-        loading={loading}
-        disabled={loading}
-        style={styles.confirmButton}
-      >
-        Ödemeye Geç
-      </Button>
-    </ScrollView>
+      <View style={styles.footer}>
+        <View>
+          <Text style={styles.totalLabel}>Toplam Tutar</Text>
+          <Text style={styles.totalPrice}>{service.price} TL</Text>
+        </View>
+        <Button
+          mode="contained"
+          onPress={handleBooking}
+          loading={loading}
+          disabled={loading || !selectedSlot}
+          style={styles.confirmButton}
+          labelStyle={theme.typography.button}
+          buttonColor={theme.colors.primary}
+        >
+          Devam Et
+        </Button>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  card: { marginBottom: 20, backgroundColor: '#e3f2fd' },
-  sectionTitle: { marginTop: 10, marginBottom: 10, fontSize: 18 },
-  dateScroll: { marginBottom: 20 },
-  chip: { marginRight: 10 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  slotChip: { margin: 5, width: '30%', justifyContent:'center' },
-  confirmButton: { marginTop: 30, padding: 5, marginBottom: 50 }
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background
+  },
+  scrollContent: {
+    padding: theme.spacing.l,
+    paddingBottom: 100,
+  },
+  progressContainer: {
+    marginBottom: theme.spacing.l,
+  },
+  stepText: {
+    ...theme.typography.caption,
+    marginBottom: theme.spacing.xs,
+    color: theme.colors.text.secondary,
+  },
+  progressBar: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.border,
+  },
+  card: {
+    marginBottom: theme.spacing.l,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.sm,
+  },
+  shopName: {
+    ...theme.typography.h3,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  serviceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  serviceName: {
+    ...theme.typography.body,
+    fontWeight: '600',
+  },
+  servicePrice: {
+    ...theme.typography.body,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  serviceDuration: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+  },
+  sectionTitle: {
+    ...theme.typography.h3,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.m,
+  },
+  dateScroll: {
+    paddingBottom: theme.spacing.m,
+  },
+  dateChip: {
+    width: 60,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    marginRight: theme.spacing.s,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...theme.shadows.sm,
+  },
+  dateChipSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  dayText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.text.primary,
+  },
+  monthText: {
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  timeChip: {
+    width: '31%',
+    paddingVertical: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.m,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  timeChipSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  timeText: {
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+  },
+  textSelected: {
+    color: theme.colors.text.inverse,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    ...theme.shadows.lg,
+  },
+  totalLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+  },
+  totalPrice: {
+    ...theme.typography.h2,
+    color: theme.colors.primary,
+  },
+  confirmButton: {
+    borderRadius: theme.borderRadius.pill,
+    paddingHorizontal: theme.spacing.m,
+  },
 });
