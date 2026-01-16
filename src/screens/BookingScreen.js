@@ -5,12 +5,17 @@ import { auth } from '../../firebaseConfig';
 import { format, addDays, isSameDay } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { theme } from '../theme';
+// YENİ: Safe Area Kütüphanesi
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BookingScreen({ route, navigation }) {
   const { shop, service } = route.params;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  // YENİ: Telefonun güvenli alanlarını hesapla
+  const insets = useSafeAreaInsets();
 
   const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
@@ -32,6 +37,7 @@ export default function BookingScreen({ route, navigation }) {
       userEmail: auth.currentUser.email,
       serviceName: service.name,
       price: service.price,
+      currency: service.currency || 'TL',
       date: dateStr,
       time: selectedSlot,
       status: 'pending',
@@ -43,27 +49,25 @@ export default function BookingScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    // YENİ: Container'a üstten boşluk (paddingTop) ekledik
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
-
         <View style={styles.progressContainer}>
           <Text style={styles.stepText}>Adım 1 / 2: Tarih ve Saat</Text>
           <ProgressBar progress={0.5} color={theme.colors.primary} style={styles.progressBar} />
         </View>
-
 
         <Card style={styles.card}>
           <Card.Content>
             <Title style={styles.shopName}>{shop.name}</Title>
             <View style={styles.serviceRow}>
               <Text style={styles.serviceName}>{service.name}</Text>
-              <Text style={styles.servicePrice}>{service.price} TL</Text>
+              <Text style={styles.servicePrice}>{service.price} {service.currency || 'TL'}</Text>
             </View>
             <Text style={styles.serviceDuration}>⏱️ {service.duration}</Text>
           </Card.Content>
         </Card>
-
 
         <Title style={styles.sectionTitle}>Tarih Seçin</Title>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateScroll}>
@@ -72,10 +76,7 @@ export default function BookingScreen({ route, navigation }) {
             return (
               <TouchableOpacity
                 key={index}
-                style={[
-                  styles.dateChip,
-                  isSelected && styles.dateChipSelected
-                ]}
+                style={[styles.dateChip, isSelected && styles.dateChipSelected]}
                 onPress={() => setSelectedDate(date)}
               >
                 <Text style={[styles.dayText, isSelected && styles.textSelected]}>
@@ -89,7 +90,6 @@ export default function BookingScreen({ route, navigation }) {
           })}
         </ScrollView>
 
-
         <Title style={styles.sectionTitle}>Saat Seçin</Title>
         <View style={styles.grid}>
           {timeSlots.map((slot, index) => {
@@ -97,10 +97,7 @@ export default function BookingScreen({ route, navigation }) {
             return (
               <TouchableOpacity
                 key={index}
-                style={[
-                  styles.timeChip,
-                  isSelected && styles.timeChipSelected
-                ]}
+                style={[styles.timeChip, isSelected && styles.timeChipSelected]}
                 onPress={() => setSelectedSlot(slot)}
               >
                 <Text style={[styles.timeText, isSelected && styles.textSelected]}>
@@ -110,14 +107,13 @@ export default function BookingScreen({ route, navigation }) {
             );
           })}
         </View>
-
       </ScrollView>
 
-
-      <View style={styles.footer}>
+      {/* YENİ: Footer'a alttan boşluk (paddingBottom) ekledik */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <View>
           <Text style={styles.totalLabel}>Toplam Tutar</Text>
-          <Text style={styles.totalPrice}>{service.price} TL</Text>
+          <Text style={styles.totalPrice}>{service.price} {service.currency || 'TL'}</Text>
         </View>
         <Button
           mode="contained"
@@ -136,142 +132,45 @@ export default function BookingScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  // ScrollView footer'ın altında kalmasın diye alt boşluğu artırdık
+  scrollContent: { padding: theme.spacing.l, paddingBottom: 120 }, 
+  progressContainer: { marginBottom: theme.spacing.l },
+  stepText: { ...theme.typography.caption, marginBottom: theme.spacing.xs, color: theme.colors.text.secondary },
+  progressBar: { height: 4, borderRadius: 2, backgroundColor: theme.colors.border },
+  card: { marginBottom: theme.spacing.l, backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, ...theme.shadows.sm },
+  shopName: { ...theme.typography.h3, color: theme.colors.primary, marginBottom: theme.spacing.xs },
+  serviceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  serviceName: { ...theme.typography.body, fontWeight: '600' },
+  servicePrice: { ...theme.typography.body, fontWeight: 'bold', color: theme.colors.primary },
+  serviceDuration: { ...theme.typography.caption, color: theme.colors.text.secondary },
+  sectionTitle: { ...theme.typography.h3, color: theme.colors.primary, marginBottom: theme.spacing.m },
+  dateScroll: { paddingBottom: theme.spacing.m },
+  dateChip: { width: 60, height: 70, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, marginRight: theme.spacing.s, borderWidth: 1, borderColor: theme.colors.border, ...theme.shadows.sm },
+  dateChipSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  dayText: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text.primary },
+  monthText: { fontSize: 12, color: theme.colors.text.secondary, textTransform: 'uppercase' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  timeChip: { width: '31%', paddingVertical: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, marginBottom: theme.spacing.m, borderWidth: 1, borderColor: theme.colors.border },
+  timeChipSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  timeText: { fontWeight: '600', color: theme.colors.text.primary },
+  textSelected: { color: theme.colors.text.inverse },
+  footer: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    backgroundColor: theme.colors.surface, 
+    padding: theme.spacing.l, // Yanlardan boşluk
+    paddingTop: 15, // Üstten sabit boşluk
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    borderTopWidth: 1, 
+    borderTopColor: theme.colors.border, 
+    ...theme.shadows.lg 
   },
-  scrollContent: {
-    padding: theme.spacing.l,
-    paddingBottom: 100,
-  },
-  progressContainer: {
-    marginBottom: theme.spacing.l,
-  },
-  stepText: {
-    ...theme.typography.caption,
-    marginBottom: theme.spacing.xs,
-    color: theme.colors.text.secondary,
-  },
-  progressBar: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.border,
-  },
-  card: {
-    marginBottom: theme.spacing.l,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    ...theme.shadows.sm,
-  },
-  shopName: {
-    ...theme.typography.h3,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  serviceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  serviceName: {
-    ...theme.typography.body,
-    fontWeight: '600',
-  },
-  servicePrice: {
-    ...theme.typography.body,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-  },
-  serviceDuration: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-  },
-  sectionTitle: {
-    ...theme.typography.h3,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.m,
-  },
-  dateScroll: {
-    paddingBottom: theme.spacing.m,
-  },
-  dateChip: {
-    width: 60,
-    height: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    marginRight: theme.spacing.s,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    ...theme.shadows.sm,
-  },
-  dateChipSelected: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  dayText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.text.primary,
-  },
-  monthText: {
-    fontSize: 12,
-    color: theme.colors.text.secondary,
-    textTransform: 'uppercase',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  timeChip: {
-    width: '31%',
-    paddingVertical: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.m,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  timeChipSelected: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  timeText: {
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
-  textSelected: {
-    color: theme.colors.text.inverse,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.l,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    ...theme.shadows.lg,
-  },
-  totalLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-  },
-  totalPrice: {
-    ...theme.typography.h2,
-    color: theme.colors.primary,
-  },
-  confirmButton: {
-    borderRadius: theme.borderRadius.pill,
-    paddingHorizontal: theme.spacing.m,
-  },
+  totalLabel: { ...theme.typography.caption, color: theme.colors.text.secondary },
+  totalPrice: { ...theme.typography.h2, color: theme.colors.primary },
+  confirmButton: { borderRadius: theme.borderRadius.pill, paddingHorizontal: theme.spacing.m },
 });
