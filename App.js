@@ -54,7 +54,7 @@ export default function App() {
           <Stack.Screen 
             name="ShopDetail" 
             component={ShopDetailScreen} 
-            options={{ title: 'Dükkan Detayı', headerShown: true }} 
+            options={{ title: 'Dükkan Detayı', headerShown: false }} 
           />
           <Stack.Screen 
             name="Booking" 

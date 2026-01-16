@@ -51,7 +51,7 @@ export default function ShopDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 0 }} showsVerticalScrollIndicator={false}>
 
         <View style={styles.imageContainer}>
           <Image
@@ -182,6 +182,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.l,
     minHeight: height - 230,
     ...theme.shadows.lg,
+    paddingBottom: 50,
   },
   headerRow: {
     flexDirection: 'row',
