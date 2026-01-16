@@ -13,17 +13,34 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stylespot.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Size en yakın berberleri göstermek için konumunuza ihtiyacımız var."
+      }
     },
     "android": {
+      "package": "com.stylespot.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Size en yakın dükkanları bulmak için konuma izin verin."
+        }
+      ]
+    ]
   }
 }
