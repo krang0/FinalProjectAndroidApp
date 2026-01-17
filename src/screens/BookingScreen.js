@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { Text, Button, Title, Card, ProgressBar } from 'react-native-paper';
-import { auth } from '../../firebaseConfig';
+import { auth, db } from '../../firebaseConfig'; // Added db
+import { collection, query, where, onSnapshot } from 'firebase/firestore'; // Added firestore imports
 import { format, addDays, isSameDay } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { theme } from '../theme';
@@ -13,12 +14,39 @@ export default function BookingScreen({ route, navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [bookedSlots, setBookedSlots] = useState([]); // New state for taken slots
 
   const insets = useSafeAreaInsets();
 
   const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
+
+  // Listener to fetch booked slots for the selected date
+  useEffect(() => {
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const q = query(
+      collection(db, "appointments"),
+      where("shopId", "==", shop.id),
+      where("date", "==", dateStr),
+      where("status", "in", ["confirmed", "pending"]) // Check both confirmed and pending
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const slots = [];
+      snapshot.forEach((doc) => {
+        slots.push(doc.data().time);
+      });
+      setBookedSlots(slots);
+
+      // If the currently selected slot becomes booked, deselect it
+      if (selectedSlot && slots.includes(selectedSlot)) {
+        setSelectedSlot(null);
+        Alert.alert("Uyarı", "Seçtiğiniz saat az önce başkası tarafından alındı.");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [selectedDate, shop.id]); // Re-run when date or shop changes
 
   const handleBooking = async () => {
     if (!selectedSlot) {
@@ -77,7 +105,10 @@ export default function BookingScreen({ route, navigation }) {
               <TouchableOpacity
                 key={index}
                 style={[styles.dateChip, isSelected && styles.dateChipSelected]}
-                onPress={() => setSelectedDate(date)}
+                onPress={() => {
+                  setSelectedDate(date);
+                  setSelectedSlot(null); // Reset slot when date changes
+                }}
               >
                 <Text style={[styles.dayText, isSelected && styles.textSelected]}>
                   {format(date, 'd', { locale: tr })}
@@ -94,14 +125,26 @@ export default function BookingScreen({ route, navigation }) {
         <View style={styles.grid}>
           {timeSlots.map((slot, index) => {
             const isSelected = selectedSlot === slot;
+            const isBooked = bookedSlots.includes(slot); // Check if slot is taken
+
             return (
               <TouchableOpacity
                 key={index}
-                style={[styles.timeChip, isSelected && styles.timeChipSelected]}
+                disabled={isBooked} // Disable interaction
+                style={[
+                  styles.timeChip,
+                  isSelected && styles.timeChipSelected,
+                  isBooked && styles.timeChipDisabled // Apply disabled style
+                ]}
                 onPress={() => setSelectedSlot(slot)}
               >
-                <Text style={[styles.timeText, isSelected && styles.textSelected]}>
+                <Text style={[
+                  styles.timeText,
+                  isSelected && styles.textSelected,
+                  isBooked && styles.textDisabled // Apply disabled text style
+                ]}>
                   {slot}
+                  {isBooked && " (Dolu)"}
                 </Text>
               </TouchableOpacity>
             );
@@ -152,8 +195,10 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   timeChip: { width: '31%', paddingVertical: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, marginBottom: theme.spacing.m, borderWidth: 1, borderColor: theme.colors.border },
   timeChipSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  timeChipDisabled: { backgroundColor: '#e0e0e0', borderColor: '#d0d0d0', opacity: 0.6 }, // Disabled style
   timeText: { fontWeight: '600', color: theme.colors.text.primary },
   textSelected: { color: theme.colors.text.inverse },
+  textDisabled: { color: '#a0a0a0', fontWeight: '400', textDecorationLine: 'line-through' }, // Disabled text style
   footer: {
     position: 'absolute',
     bottom: 0,
