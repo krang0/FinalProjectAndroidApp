@@ -3,22 +3,21 @@ import { StyleSheet, View } from 'react-native';
 import { Card, Title, Text, Button } from 'react-native-paper';
 import { theme } from '../theme';
 
-// Matematiksel Mesafe Hesaplama (Haversine Formülü)
 const calculateDistance = (shopLoc, userLoc) => {
   if (!shopLoc || !shopLoc.latitude || !shopLoc.longitude || !userLoc) return null;
-  
-  const R = 6371; // Dünya yarıçapı (km)
+
+  const R = 6371;
   const dLat = (shopLoc.latitude - userLoc.latitude) * (Math.PI / 180);
   const dLon = (shopLoc.longitude - userLoc.longitude) * (Math.PI / 180);
-  
-  const a = 
+
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(userLoc.latitude * (Math.PI / 180)) * Math.cos(shopLoc.latitude * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c; 
-  
-  return distance.toFixed(1); // Örn: 1.2
+  const distance = R * c;
+
+  return distance.toFixed(1);
 };
 
 export default function ShopCard({ shop, onPress, userLocation }) {
@@ -32,12 +31,11 @@ export default function ShopCard({ shop, onPress, userLocation }) {
     <Card style={styles.card} onPress={onPress}>
       <View style={styles.imageContainer}>
         <Card.Cover source={{ uri: imageUri }} style={styles.image} />
-        
+
         <View style={styles.ratingBadge}>
           <Text style={styles.ratingText}>⭐ {shop.rating || 'N/A'}</Text>
         </View>
 
-        {/* Eğer mesafe hesaplandıysa göster */}
         {distance && (
           <View style={styles.distanceBadge}>
             <Text style={styles.distanceText}>📍 {distance} km</Text>
@@ -96,7 +94,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.pill,
     ...theme.shadows.sm,
   },
-  distanceBadge: { // Siyah saydam kutu
+  distanceBadge: {
     position: 'absolute',
     bottom: theme.spacing.s,
     left: theme.spacing.s,

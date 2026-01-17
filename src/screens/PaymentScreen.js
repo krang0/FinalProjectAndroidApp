@@ -5,14 +5,14 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { db } from '../../firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { theme } from '../theme';
-// YENİ: Safe Area Kütüphanesi
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PaymentScreen({ route }) {
   const navigation = useNavigation();
   const { appointmentData } = route.params;
 
-  // YENİ: Insets
+
   const insets = useSafeAreaInsets();
 
   const [cardNumber, setCardNumber] = useState('');
@@ -46,13 +46,13 @@ export default function PaymentScreen({ route }) {
       await setDoc(docRef, { ...appointmentData, status: 'confirmed', paidAt: new Date() });
 
       setSuccess(true);
-      
+
       setTimeout(() => {
         navigation.reset({
           index: 0,
           routes: [{
             name: 'Main',
-            state: { routes: [{ name: 'AppointmentsTab' }] } 
+            state: { routes: [{ name: 'AppointmentsTab' }] }
           }],
         });
       }, 2000);
@@ -68,15 +68,15 @@ export default function PaymentScreen({ route }) {
       <View style={styles.successContainer}>
         <IconButton icon="check-circle" size={100} iconColor={theme.colors.success} />
         <Title style={styles.successTitle}>Ödeme Başarılı!</Title>
-        <Text style={{textAlign:'center', marginTop:10}}>Randevularım sayfasına yönlendiriliyorsunuz...</Text>
+        <Text style={{ textAlign: 'center', marginTop: 10 }}>Randevularım sayfasına yönlendiriliyorsunuz...</Text>
       </View>
     );
   }
 
   return (
-    // YENİ: Üstten boşluk verdik
+
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.progressContainer}>
           <Text style={styles.stepText}>Adım 2 / 2: Ödeme</Text>
@@ -93,7 +93,7 @@ export default function PaymentScreen({ route }) {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tutar</Text>
               <Text style={[styles.summaryValue, styles.totalValue]}>
-                 {appointmentData.price} {appointmentData.currency || 'TL'}
+                {appointmentData.price} {appointmentData.currency || 'TL'}
               </Text>
             </View>
           </Card.Content>
@@ -138,7 +138,6 @@ export default function PaymentScreen({ route }) {
         </Card>
       </ScrollView>
 
-      {/* YENİ: Alttan boşluk verdik */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <Button
           mode="contained"
@@ -157,9 +156,8 @@ export default function PaymentScreen({ route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  successContainer: { flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#fff', padding: 20 },
-  successTitle: { marginTop:20, fontSize:24, color: theme.colors.success, fontWeight:'bold'},
-  // ScrollView footer'ın altında kalmasın diye alt boşluğu artırdık
+  successContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 20 },
+  successTitle: { marginTop: 20, fontSize: 24, color: theme.colors.success, fontWeight: 'bold' },
   scrollContent: { padding: theme.spacing.l, paddingBottom: 120 },
   progressContainer: { marginBottom: theme.spacing.l },
   stepText: { ...theme.typography.caption, marginBottom: theme.spacing.xs, color: theme.colors.text.secondary },
@@ -174,17 +172,17 @@ const styles = StyleSheet.create({
   input: { marginBottom: theme.spacing.m, backgroundColor: theme.colors.surface },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   halfInput: { width: '48%' },
-  footer: { 
-    position: 'absolute', 
-    bottom: 0, 
-    left: 0, 
-    right: 0, 
-    backgroundColor: theme.colors.surface, 
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.surface,
     padding: theme.spacing.l,
     paddingTop: 15,
-    borderTopWidth: 1, 
-    borderTopColor: theme.colors.border, 
-    ...theme.shadows.lg 
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    ...theme.shadows.lg
   },
   payButton: { borderRadius: theme.borderRadius.pill, backgroundColor: theme.colors.primary }
 });

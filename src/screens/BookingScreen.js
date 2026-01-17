@@ -5,7 +5,7 @@ import { auth } from '../../firebaseConfig';
 import { format, addDays, isSameDay } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { theme } from '../theme';
-// YENİ: Safe Area Kütüphanesi
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BookingScreen({ route, navigation }) {
@@ -13,8 +13,8 @@ export default function BookingScreen({ route, navigation }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [loading, setLoading] = useState(false);
-  
-  // YENİ: Telefonun güvenli alanlarını hesapla
+
+
   const insets = useSafeAreaInsets();
 
   const timeSlots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
@@ -49,9 +49,9 @@ export default function BookingScreen({ route, navigation }) {
   };
 
   return (
-    // YENİ: Container'a üstten boşluk (paddingTop) ekledik
+
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.progressContainer}>
           <Text style={styles.stepText}>Adım 1 / 2: Tarih ve Saat</Text>
@@ -109,7 +109,7 @@ export default function BookingScreen({ route, navigation }) {
         </View>
       </ScrollView>
 
-      {/* YENİ: Footer'a alttan boşluk (paddingBottom) ekledik */}
+
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <View>
           <Text style={styles.totalLabel}>Toplam Tutar</Text>
@@ -133,8 +133,7 @@ export default function BookingScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // ScrollView footer'ın altında kalmasın diye alt boşluğu artırdık
-  scrollContent: { padding: theme.spacing.l, paddingBottom: 120 }, 
+  scrollContent: { padding: theme.spacing.l, paddingBottom: 120 },
   progressContainer: { marginBottom: theme.spacing.l },
   stepText: { ...theme.typography.caption, marginBottom: theme.spacing.xs, color: theme.colors.text.secondary },
   progressBar: { height: 4, borderRadius: 2, backgroundColor: theme.colors.border },
@@ -155,20 +154,20 @@ const styles = StyleSheet.create({
   timeChipSelected: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   timeText: { fontWeight: '600', color: theme.colors.text.primary },
   textSelected: { color: theme.colors.text.inverse },
-  footer: { 
-    position: 'absolute', 
-    bottom: 0, 
-    left: 0, 
-    right: 0, 
-    backgroundColor: theme.colors.surface, 
-    padding: theme.spacing.l, // Yanlardan boşluk
-    paddingTop: 15, // Üstten sabit boşluk
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    borderTopWidth: 1, 
-    borderTopColor: theme.colors.border, 
-    ...theme.shadows.lg 
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.l,
+    paddingTop: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    ...theme.shadows.lg
   },
   totalLabel: { ...theme.typography.caption, color: theme.colors.text.secondary },
   totalPrice: { ...theme.typography.h2, color: theme.colors.primary },

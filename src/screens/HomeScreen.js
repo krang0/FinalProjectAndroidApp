@@ -1,26 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
-import { Text, IconButton } from 'react-native-paper'; // Appbar kaldırdık, custom header var
+import { Text, IconButton } from 'react-native-paper';
 import { db, auth } from '../../firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
-import * as Location from 'expo-location'; 
+import * as Location from 'expo-location';
 import ShopCard from '../components/ShopCard';
 import { theme } from '../theme';
 
-// --- MESAFE HESAPLAMA (Sayısal Değer Döndürür - Sıralama İçin) ---
+
 const getDistanceVal = (shopLoc, userLoc) => {
-  if (!shopLoc || !shopLoc.latitude || !shopLoc.longitude || !userLoc) return Infinity; // Bilinmeyen en sona gitsin
-  
-  const R = 6371; 
+  if (!shopLoc || !shopLoc.latitude || !shopLoc.longitude || !userLoc) return Infinity;
+  const R = 6371;
   const dLat = (shopLoc.latitude - userLoc.latitude) * (Math.PI / 180);
   const dLon = (shopLoc.longitude - userLoc.longitude) * (Math.PI / 180);
-  
-  const a = 
+
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(userLoc.latitude * (Math.PI / 180)) * Math.cos(shopLoc.latitude * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // KM cinsinden ham sayı
+  return R * c;
 };
 
 const CATEGORIES = [
@@ -37,20 +36,19 @@ export default function HomeScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [userLocation, setUserLocation] = useState(null);
 
-  // 1. Veri ve Konum Çekme
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       try {
-        // Dükkanları Çek
         const querySnapshot = await getDocs(collection(db, "shops"));
         const shopsList = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           shopsList.push({ ...data, id: doc.id, category: data.category || 'Unisex' });
         });
-        
-        // Konumu Çek
+
+
         let locationCoords = null;
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
@@ -59,10 +57,10 @@ export default function HomeScreen({ navigation }) {
           setUserLocation(locationCoords);
         }
 
-        // İlk Sıralama ve Atama
+
         setShops(shopsList);
         applyFilterAndSort(shopsList, 'All', locationCoords);
-        
+
       } catch (error) {
         console.error("Hata:", error);
       } finally {
@@ -72,16 +70,16 @@ export default function HomeScreen({ navigation }) {
     init();
   }, []);
 
-  // 2. Filtreleme ve Sıralama Fonksiyonu (Merkezi Mantık)
+
   const applyFilterAndSort = (dataList, category, location) => {
     let result = [...dataList];
 
-    // A. Kategori Filtresi
+
     if (category !== 'All') {
       result = result.filter(shop => shop.category === category);
     }
 
-    // B. Mesafe Sıralaması (En yakın en üste)
+
     if (location) {
       result.sort((a, b) => {
         const distA = getDistanceVal(a.location, location);
@@ -93,7 +91,7 @@ export default function HomeScreen({ navigation }) {
     setFilteredShops(result);
   };
 
-  // Kategoriye tıklanınca çalışır
+
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     applyFilterAndSort(shops, category, userLocation);
@@ -109,7 +107,7 @@ export default function HomeScreen({ navigation }) {
         <View>
           <Text style={styles.headerSubtitle}>Keşfet</Text>
           <Text style={styles.headerTitle}>StyleSpot</Text>
-          <Text style={{fontSize:11, color: theme.colors.text.secondary, marginTop: 2}}>
+          <Text style={{ fontSize: 11, color: theme.colors.text.secondary, marginTop: 2 }}>
             {userLocation ? "📍 Konumuna göre sıralandı" : "📍 Konum bekleniyor..."}
           </Text>
         </View>
@@ -122,11 +120,11 @@ export default function HomeScreen({ navigation }) {
         />
       </View>
 
-      {/* DÜZELTİLEN KATEGORİ ALANI */}
-      <View style={{ height: 60 }}> 
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
+
+      <View style={{ height: 60 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryContainer}
         >
           {CATEGORIES.map((cat) => {
@@ -155,7 +153,7 @@ export default function HomeScreen({ navigation }) {
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator animating={true} size="large" color={theme.colors.primary} />
-          <Text style={{marginTop:10, color:'gray'}}>Size en yakın dükkanlar bulunuyor...</Text>
+          <Text style={{ marginTop: 10, color: 'gray' }}>Size en yakın dükkanlar bulunuyor...</Text>
         </View>
       ) : filteredShops.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -183,52 +181,52 @@ export default function HomeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  header: { 
-    backgroundColor: theme.colors.surface, 
-    paddingTop: 50, 
-    paddingBottom: 10, // Alt boşluk biraz rahatlatıldı
-    borderBottomLeftRadius: 24, // Daha yumuşak köşe
-    borderBottomRightRadius: 15, 
-    ...theme.shadows.sm, 
-    zIndex: 1 
+  header: {
+    backgroundColor: theme.colors.surface,
+    paddingTop: 50,
+    paddingBottom: 10,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 15,
+    ...theme.shadows.sm,
+    zIndex: 1
   },
-  headerTop: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: theme.spacing.l, 
-    marginBottom: 15 
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.l,
+    marginBottom: 15
   },
   headerTitle: { ...theme.typography.h1, color: theme.colors.primary, letterSpacing: -0.5 },
   headerSubtitle: { ...theme.typography.caption, color: theme.colors.text.secondary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600' },
   logoutButton: { margin: 0, backgroundColor: theme.colors.background },
-  
-  // --- KATEGORİ STİLLERİ (GÜNCELLENDİ) ---
-  categoryContainer: { 
-    paddingHorizontal: theme.spacing.l, 
-    paddingVertical: 5, // Dikey boşluk verildi ki gölgeler kesilmesin
+
+
+  categoryContainer: {
+    paddingHorizontal: theme.spacing.l,
+    paddingVertical: 5,
     alignItems: 'center'
   },
-  categoryPill: { 
-    paddingHorizontal: 20, // Daha geniş iç boşluk
-    paddingVertical: 8, 
-    borderRadius: 10, // Tam yuvarlak (pill) yerine daha modern yumuşak kare
-    backgroundColor: theme.colors.background, // Arkaplan griye yakın
+  categoryPill: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: theme.colors.background,
     marginRight: 10,
-    borderWidth: 0, // Çizgiyi kaldırdık, daha temiz dursun
-    ...theme.shadows.sm, // Hafif gölge ekledik
+    borderWidth: 0,
+    ...theme.shadows.sm,
   },
-  categoryPillActive: { 
-    backgroundColor: theme.colors.primary, 
+  categoryPillActive: {
+    backgroundColor: theme.colors.primary,
     ...theme.shadows.md,
   },
-  categoryText: { 
-    fontSize: 14, 
-    fontWeight: '600', 
-    color: theme.colors.text.primary 
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text.primary
   },
-  categoryTextActive: { 
-    color: theme.colors.text.inverse 
+  categoryTextActive: {
+    color: theme.colors.text.inverse
   },
 
   listContainer: { padding: theme.spacing.m, paddingTop: theme.spacing.l },
